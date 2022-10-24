@@ -1,0 +1,49 @@
+version: '3.7'
+
+services:
+  # PHP-FPM - Service
+  app:
+    build:
+      context: .
+      dockerfile: ./docker-files/php/Dockerfile
+    restart: unless-stopped
+    tty: true
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - ./docker-files/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - app-network
+
+  # NGINX - Service
+  webserver:
+    image: nginx:alpine
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - ./:/var/www/html
+      - ./docker-files/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+      - ./docker-files/nginx/conf.d/default.conf:/etc/nginx/sites-available/default.conf
+      - ./docker-files/nginx/nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - app-network
+    depends_on:
+      - app
+  
+  # Load balancer using HAProxy
+  load_balancer:
+    image: dockercloud/haproxy
+    links:
+        - webserver
+    ports:
+        - "${APP_PORT}:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped 
+    networks:
+      - app-network
+
+# Networks
+networks:
+  app-network:
+    driver: bridge
