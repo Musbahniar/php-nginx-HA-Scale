@@ -1,5 +1,5 @@
 FROM php:7.4-fpm
-
+LABEL maintainer="Musbahniar (ruang.9campus@gmail.com)"
 # COPY composer.lock composer.json /var/www/
 
 WORKDIR /var/www/html
